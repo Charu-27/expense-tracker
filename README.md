@@ -1,225 +1,198 @@
 # Personal Expense Tracker
 
-A full-stack personal finance tool for recording and reviewing expenses. Built with Next.js, TypeScript, and following a layered architecture pattern similar to MCW (Mobile Cash Wallet) project.
+A full-stack personal finance tool for recording and reviewing expenses. Built with **Spring Boot (Java)** backend and **React (TypeScript)** frontend, following a clean layered architecture pattern.
 
-## Features
+## Architecture Structure
 
-### Core Functionality
-- ✅ Create expense entries with amount, category, description, and date
-- ✅ View list of all expenses
-- ✅ Filter expenses by category
-- ✅ Sort expenses by date (newest first)
-- ✅ Display total amount of visible expenses
-- ✅ Handle multiple form submissions (idempotency)
-- ✅ Handle page refreshes gracefully
-- ✅ Basic error and loading states
-
-### Architecture
-
-This project follows a **layered architecture pattern** similar to MCW:
+This project follows a **layered architecture pattern** with clear separation of concerns:
 
 ```
 ┌─────────────────────────────────────┐
 │   Controller Layer                  │
-│   (API Routes - pages/api/)         │
+│   (REST API - Spring Boot)          │
 └──────────────┬──────────────────────┘
                │
 ┌──────────────▼──────────────────────┐
 │   Service Layer                      │
-│   (Business Logic - src/service/)    │
+│   (Business Logic)                   │
 └──────────────┬──────────────────────┘
                │
 ┌──────────────▼──────────────────────┐
 │   Repository Layer                   │
-│   (Data Access - src/repository/)    │
+│   (Data Access)                      │
 └──────────────┬──────────────────────┘
                │
 ┌──────────────▼──────────────────────┐
 │   Model Layer                        │
-│   (Data Models - src/model/)         │
+│   (Data Models)                      │
 └─────────────────────────────────────┘
 ```
-
-### Technology Stack
-
-- **Frontend**: Next.js 14, React 18, TypeScript
-- **Backend**: Next.js API Routes (Serverless Functions)
-- **Persistence**: JSON file storage (in-memory for serverless, file-based for local)
-- **Styling**: CSS (simple, clean design)
 
 ### Project Structure
 
 ```
 expense-tracker/
-├── pages/
-│   ├── api/
-│   │   └── expenses/
-│   │       └── index.ts          # API endpoint handler
-│   ├── _app.tsx                   # Next.js app wrapper
-│   └── index.tsx                  # Main frontend page
-├── src/
-│   ├── controller/
-│   │   └── ExpenseController.ts   # Request/Response handling
-│   ├── service/
-│   │   └── ExpenseService.ts      # Business logic
-│   ├── repository/
-│   │   └── ExpenseRepository.ts   # Data persistence
-│   └── model/
-│       └── Expense.ts              # Data models
-├── styles/
-│   └── globals.css                # Global styles
-├── package.json
-├── tsconfig.json
-├── vercel.json                     # Vercel configuration
-└── README.md
+├── backend/                          # Spring Boot Backend
+│   ├── src/main/java/com/expensetracker/
+│   │   ├── ExpenseTrackerApplication.java
+│   │   ├── controller/              # REST Controllers
+│   │   ├── service/                 # Business Logic
+│   │   ├── repository/              # Data Access
+│   │   └── model/                   # Data Models
+│   ├── src/main/resources/
+│   │   └── application.properties   # Configuration
+│   └── pom.xml                      # Maven Dependencies
+│
+└── frontend/                         # React Frontend
+    ├── src/
+    │   ├── components/              # React Components
+    │   ├── styles/                  # CSS Styles
+    │   ├── App.tsx                  # Main App Component
+    │   └── main.tsx                 # Entry Point
+    ├── package.json                 # NPM Dependencies
+    └── vite.config.ts               # Vite Configuration
 ```
 
-### Persistence Mechanism
+## System Interaction Flow
 
-**Choice: Hybrid Storage (File System + In-Memory)**
-
-The application uses a hybrid approach for persistence:
-- **Local Development**: Stores data in `data/expenses.json` file
-- **Vercel Serverless**: Uses in-memory storage (resets on cold start)
-
-**Rationale:**
-- Simple and lightweight for a minimal expense tracker
-- No external database dependencies required
-- Suitable for single-user or small-scale usage
-- Easy to migrate to a database later if needed
-- Works immediately without additional setup
-
-**Important Notes:**
-- **For Vercel Production**: The in-memory store resets on serverless function cold starts. For persistent storage, consider:
-  - Vercel KV (Redis) - Easy integration with Vercel
-  - PostgreSQL via Vercel Postgres
-  - MongoDB Atlas
-  - Supabase
-- **For Local Development**: Data persists in `data/expenses.json` file
-
-**Migration Path**: The repository pattern makes it easy to swap the storage implementation. Simply replace `ExpenseRepository` with a database-backed implementation.
-
-### API Endpoints
-
-#### POST /api/expenses
-Create a new expense.
-
-**Request Body:**
-```json
-{
-  "amount": 100.50,
-  "category": "Food",
-  "description": "Lunch at restaurant",
-  "date": "2024-01-15"
-}
+### Creating an Expense
+```
+User Input → React Frontend (ExpenseForm)
+  → POST http://localhost:8080/api/expenses
+    → Spring Boot Controller (ExpenseController)
+      → Service (ExpenseService) [Validation & Business Logic]
+        → Repository (ExpenseRepository) [Data Persistence]
+          → Storage (In-Memory / File System)
+      ← Return Expense
+    ← HTTP 201 Response
+  ← Update UI
 ```
 
-**Response:** 201 Created
-```json
-{
-  "id": "uuid",
-  "amount": 100.50,
-  "category": "Food",
-  "description": "Lunch at restaurant",
-  "date": "2024-01-15",
-  "created_at": "2024-01-15T10:30:00.000Z"
-}
+### Fetching Expenses
+```
+Page Load → GET http://localhost:8080/api/expenses
+  → Spring Boot Controller (ExpenseController)
+    → Service (ExpenseService) [Filtering & Sorting]
+      → Repository (ExpenseRepository) [Data Retrieval]
+        → Storage (In-Memory / File System)
+      ← Return Expenses
+    ← HTTP 200 Response
+  ← Display in UI
 ```
 
-#### GET /api/expenses
-Get list of expenses.
+## Technology Stack
 
-**Query Parameters:**
-- `category` (optional): Filter by category
-- `sort` (optional): `date_desc` for newest first
+- **Backend**: Spring Boot 3.2.0, Java 17, Maven
+- **Frontend**: React 18, TypeScript, Vite
+- **Persistence**: In-Memory Storage (can be migrated to database)
+- **Styling**: CSS
 
-**Example:** `/api/expenses?category=Food&sort=date_desc`
+## Tradeoffs & Design Decisions
 
-**Response:** 200 OK
-```json
-[
-  {
-    "id": "uuid",
-    "amount": 100.50,
-    "category": "Food",
-    "description": "Lunch at restaurant",
-    "date": "2024-01-15",
-    "created_at": "2024-01-15T10:30:00.000Z"
-  }
-]
-```
+### Why Layered Architecture?
+**Benefits:**
+- Clear separation of concerns - each layer has a single responsibility
+- Easy to test individual layers in isolation
+- Simple to swap implementations (e.g., database vs in-memory storage)
+- Maintainable and scalable codebase
 
-### Idempotency
+**Tradeoff:** Slight overhead in code organization, but provides better long-term maintainability.
 
-The API handles duplicate requests gracefully:
-- If the same expense (same amount, category, description, date) is submitted within 1 minute, it returns the existing expense instead of creating a duplicate
-- This prevents duplicate entries from multiple form submissions or page refreshes
+### Why Spring Boot?
+**Benefits:**
+- Industry-standard Java framework with extensive ecosystem
+- Built-in dependency injection and inversion of control
+- Auto-configuration reduces boilerplate code
+- Excellent support for REST APIs
+- Strong validation and error handling
 
-### Getting Started
+**Tradeoff:** More setup compared to Node.js, but provides enterprise-grade features and scalability.
 
-#### Prerequisites
-- Node.js 18+ 
+### Why React + Vite?
+**Benefits:**
+- React is the most popular frontend framework
+- Vite provides fast development and build times
+- TypeScript ensures type safety
+- Component-based architecture for reusability
+- Large ecosystem and community support
+
+**Tradeoff:** Separate frontend/backend deployment, but provides better separation of concerns and scalability.
+
+### Why In-Memory Storage?
+**Benefits:**
+- No external database dependencies - works immediately
+- Simple and lightweight for single-user/small-scale usage
+- Easy to migrate to database later using repository pattern
+
+**Tradeoffs:**
+- Data resets on application restart (acceptable for demo/personal use)
+- Not suitable for multi-user or production at scale
+
+**Why not database from start?**
+- Avoids setup complexity and external dependencies
+- Repository pattern allows easy migration when needed
+- Sufficient for MVP and personal use cases
+
+### Why TypeScript?
+**Benefits:**
+- Type safety catches errors at compile time
+- Better IDE support and autocomplete
+- Self-documenting code through types
+- Easier refactoring
+
+**Tradeoff:** Slight learning curve and setup overhead, but significantly improves code quality.
+
+## Getting Started
+
+### Prerequisites
+- Java 17+
+- Maven 3.6+
+- Node.js 18+
 - npm or yarn
 
-#### Installation
+### Backend Setup
 
-1. Install dependencies:
+1. Navigate to backend directory:
+```bash
+cd backend
+```
+
+2. Build and run:
+```bash
+mvn spring-boot:run
+```
+
+Backend will run on `http://localhost:8080`
+
+### Frontend Setup
+
+1. Navigate to frontend directory:
+```bash
+cd frontend
+```
+
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-2. Run development server:
+3. Run development server:
 ```bash
 npm run dev
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser
+Frontend will run on `http://localhost:5173`
 
-#### Build for Production
+### Running Both
 
+1. Start backend first (Terminal 1):
 ```bash
-npm run build
-npm start
+cd backend && mvn spring-boot:run
 ```
 
-### Deployment to Vercel
-
-1. **Install Vercel CLI** (if not already installed):
+2. Start frontend (Terminal 2):
 ```bash
-npm i -g vercel
+cd frontend && npm run dev
 ```
 
-2. **Deploy**:
-```bash
-vercel
-```
-
-Or connect your GitHub repository to Vercel for automatic deployments.
-
-3. **Environment Variables**: None required for basic functionality.
-
-### Development Notes
-
-- The application is designed to handle real-world conditions:
-  - Multiple form submissions (disabled button during submission)
-  - Page refreshes (data persists)
-  - Slow/failed API responses (error states shown)
-  - Network retries (idempotent API)
-
-- Styling is kept simple and clean, focusing on functionality and clarity.
-
-### Future Enhancements (Nice to Have)
-
-- [ ] Enhanced validation (negative amounts, required fields)
-- [ ] Summary view (total per category)
-- [ ] Automated tests (unit/integration)
-- [ ] Enhanced error handling and retry logic
-- [ ] Database migration (PostgreSQL/MongoDB)
-- [ ] User authentication
-- [ ] Export to CSV/PDF
-- [ ] Date range filtering
-
-### License
-
-This project is created as an assignment submission.
-
+3. Open browser: `http://localhost:5173`

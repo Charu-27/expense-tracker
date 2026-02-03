@@ -2,7 +2,7 @@
 
 ## High-Level Architecture (HLD)
 
-This project follows a **layered architecture pattern** similar to MCW (Mobile Cash Wallet), adapted for a Next.js full-stack application.
+This project follows a **layered architecture pattern** designed for a Next.js full-stack application.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -171,22 +171,20 @@ Page Load → GET /api/expenses?category=Food&sort=date_desc
 → Display in UI
 ```
 
-## Comparison with MCW Architecture
+## Architecture Benefits
 
-### Similarities
-- ✅ Layered architecture (Controller → Service → Repository)
-- ✅ Separation of concerns
-- ✅ Service layer for business logic
-- ✅ Repository pattern for data access
-- ✅ Model/DTO pattern for data structures
+### Why Layered Architecture?
+- ✅ Clear separation of concerns
+- ✅ Easy to test individual layers
+- ✅ Simple to swap implementations (e.g., database vs file storage)
+- ✅ Maintainable and scalable codebase
+- ✅ Follows industry best practices
 
-### Adaptations for Next.js/Vercel
-- **MCW**: Spring Boot microservices with separate deployments
-- **This Project**: Next.js monolith with API routes (serverless functions)
-- **MCW**: Java with Spring Framework
-- **This Project**: TypeScript with Next.js
-- **MCW**: Database (Oracle/PostgreSQL)
-- **This Project**: File system / In-memory (easily replaceable with database)
+### Technology Choices
+- **Framework**: Next.js with API routes (serverless functions)
+- **Language**: TypeScript for type safety
+- **Storage**: File system / In-memory (easily replaceable with database)
+- **Deployment**: Vercel serverless platform
 
 ## Scalability Considerations
 
